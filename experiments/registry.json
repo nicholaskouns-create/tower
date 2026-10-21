@@ -1,0 +1,44 @@
+{
+  "schema": "e47-tower/registry@1",
+  "pyodide": "0.27.2",
+  "experiments": [
+    {
+      "id": "fib-lucas-tower-validator",
+      "title": "Fibonacci–Lucas tower validator",
+      "summary": "The validator merged in E47-Kartekeya PR #135, fetched byte-for-byte at a pinned main commit and run unmodified: census along the tower, D → 3/φ, quantum-tetrahedron invariants, selector identity, and the exact 125×125 integer Casimir (rank K = 78, dim ker K = 47).",
+      "source": {
+        "kind": "github",
+        "repo": "nicholaskouns-create/E47-Kartekeya",
+        "path": "research/e47/validation/e47_fib_lucas_tower_validate.py",
+        "commit": "7f815053339a24f23882ad04c9f60e99260212a6",
+        "sha256": "59f6921b083fd54ada1b83caf4cab04dd1e35fe7cb7d4bcb6c6f2de844dbf86f"
+      },
+      "params": [],
+      "expect": { "checks_pass": 35, "checks_total": 35, "last_line": "PASS" },
+      "postprocess": "validator"
+    },
+    {
+      "id": "tower-census",
+      "title": "Tower census at one index n",
+      "summary": "For one tower index n (odd, 3 ∤ n): j, J, the multiplicities n(j) = Fₙ and n(J) = Fₙ₋₂ counted directly from the weight census of V_j ⊗ V_j ⊗ V_j, the kept dimension D, D/(2j+1)², its gap to 3/φ, and (for j ≤ 2) the exact integer Casimir and selector rank.",
+      "source": { "kind": "local", "path": "experiments/tower_census.py" },
+      "params": [
+        { "name": "mode", "type": "const", "value": "census" },
+        { "name": "n", "type": "int", "default": 5, "min": 5, "max": 199, "label": "tower index n", "help": "odd, not divisible by 3: 5, 7, 11, 13, 17, 19, …", "constraint": "tower" },
+        { "name": "casimir", "type": "bool", "default": true, "label": "exact Casimir build", "help": "builds the (2j+1)³ integer Casimir and ranks K exactly; runs only when j ≤ 2 (n = 5)" }
+      ],
+      "postprocess": "census"
+    },
+    {
+      "id": "tower-sweep",
+      "title": "Sweep the tower up to n_max",
+      "summary": "Every tower member 5 ≤ n ≤ n_max with the full census, the approach of D/(2j+1)² to 3/φ (carried to n + 40 digits), and a strict-monotonicity check on the gap. Produces the limit plot.",
+      "source": { "kind": "local", "path": "experiments/tower_census.py" },
+      "params": [
+        { "name": "mode", "type": "const", "value": "sweep" },
+        { "name": "n_max", "type": "int", "default": 31, "min": 5, "max": 199, "label": "n_max", "help": "largest tower index in the sweep (≤ 199)" }
+      ],
+      "postprocess": "census"
+    }
+  ]
+}
