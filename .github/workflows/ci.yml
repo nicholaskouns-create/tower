@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "release/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experiments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run every experiment in experiments/
+        run: |
+          set -e
+          for f in experiments/*.py; do
+            echo "::group::$f"
+            python "$f"
+            echo "::endgroup::"
+          done
+          python experiments/tower_census.py --casimir
+          python experiments/tower_census.py --mode sweep --n-max 199 | tail -3
+
+      - name: Run the pinned tower validator exactly as the browser does
+        run: |
+          set -e
+          url=$(python -c "import json;e=[x for x in json.load(open('experiments/registry.json'))['experiments'] if x['id']=='fib-lucas-tower-validator'][0]['source'];print(f\"https://raw.githubusercontent.com/{e['repo']}/{e['commit']}/{e['path']}\")")
+          curl -fsSL "$url" -o /tmp/validator.py
+          python /tmp/validator.py | tee /tmp/validator.out
+          grep -q "RESULT: 35 / 35 checks" /tmp/validator.out
+
+      - name: Unit tests (census, registry, module graph, pinned SHA-256)
+        env:
+          E47_NETWORK: "1"
+        run: python -m unittest discover -s tests -v
+
+      - name: Syntax-check the site's JavaScript modules
+        run: for f in js/*.js; do node --check "$f"; done
