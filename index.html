@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E47-Tower · a working research environment</title>
+<meta name="description" content="Browse, compute, compare, replay and export the Fibonacci–Lucas tower of E47, in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/highlight.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+  <div class="kick">Mathematical City · E47 · The Fibonacci–Lucas Tower</div>
+  <div class="mast-row">
+    <h1>E47-<i>Tower</i></h1>
+    <p class="sub">Browse the source, run it, compare runs, replay them, and take the receipts with you, all on one screen.</p>
+  </div>
+  <nav class="tabs" role="tablist">
+    <a href="#/explore" data-view="explore" role="tab"><span>I</span> Explore</a>
+    <a href="#/run" data-view="run" role="tab"><span>II</span> Run</a>
+    <a href="#/compare" data-view="compare" role="tab"><span>III</span> Compare</a>
+    <a href="#/replay" data-view="replay" role="tab"><span>IV</span> Replay &amp; Export</a>
+  </nav>
+</header>
+
+<main>
+  <!-- I. Repository explorer -->
+  <section id="view-explore" class="view" hidden>
+    <div class="bar">
+      <label>Repository
+        <select id="ex-repo">
+          <option value="nicholaskouns-create/E47-Kartekeya">nicholaskouns-create/E47-Kartekeya</option>
+          <option value="nicholaskouns-create/tower">nicholaskouns-create/tower</option>
+        </select>
+      </label>
+      <label>Ref <select id="ex-ref"><option value="main">main</option></select></label>
+      <span class="sha" id="ex-sha" title="commit SHA the tree is pinned to">—</span>
+      <div class="pins">
+        <span class="lbl">Pinned</span>
+        <button class="pin" data-pin="validator">tower validator</button>
+        <button class="pin" data-pin="paper">tower paper (.tex)</button>
+        <button class="pin" data-pin="census">tower_census.py</button>
+      </div>
+    </div>
+    <div id="ex-msg" class="msg" hidden></div>
+    <div class="explorer">
+      <aside class="tree-pane">
+        <input id="ex-filter" type="search" placeholder="filter paths…  e.g. validate">
+        <div id="ex-count" class="tiny"></div>
+        <div id="ex-tree" class="tree"></div>
+      </aside>
+      <article class="file-pane">
+        <div class="file-head">
+          <div class="file-path" id="ex-path">Choose a file from the tree or a pinned shortcut.</div>
+          <div class="file-actions">
+            <a id="ex-gh" class="btn ghost" target="_blank" rel="noopener" hidden>Open on GitHub ↗</a>
+            <button id="ex-copy" class="btn ghost" hidden>Copy permalink</button>
+            <button id="ex-torun" class="btn" hidden>Open in runner →</button>
+          </div>
+        </div>
+        <div id="ex-meta" class="tiny"></div>
+        <pre class="code" id="ex-code"><code></code></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- II. Experiment runner -->
+  <section id="view-run" class="view" hidden>
+    <div class="runner">
+      <div class="col-left">
+        <div class="panel-h">Experiment</div>
+        <select id="rn-exp"></select>
+        <p id="rn-summary" class="summary"></p>
+        <div id="rn-source" class="tiny"></div>
+        <form id="rn-params" class="params" onsubmit="return false"></form>
+        <div class="panel-h">Code <span id="rn-codestate" class="badge">original</span><span id="rn-hash" class="tiny right"></span></div>
+        <textarea id="rn-code" spellcheck="false" wrap="off" aria-label="experiment source code"></textarea>
+        <div class="row">
+          <button id="rn-run" class="btn primary">Run</button>
+          <button id="rn-reset" class="btn ghost">Reset to original</button>
+          <span id="rn-engine" class="tiny right">Python engine: not loaded</span>
+        </div>
+      </div>
+      <div class="col-right">
+        <div class="panel-h">Output <span id="rn-status" class="badge"></span></div>
+        <div id="rn-headline" class="headline"></div>
+        <pre id="rn-out" class="out"></pre>
+        <div id="rn-figure" class="figure"></div>
+        <div id="rn-table" class="table-wrap"></div>
+        <div class="panel-h">Run records <span class="tiny">kept in this browser (localStorage)</span></div>
+        <div id="rn-history" class="history"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- III. Comparison view -->
+  <section id="view-compare" class="view" hidden>
+    <div class="bar">
+      <label>Run A <select id="cp-a"></select></label>
+      <label>Run B <select id="cp-b"></select></label>
+      <label class="btn ghost file-btn">Upload run JSON<input id="cp-upload" type="file" accept=".json,.zip,application/json" multiple hidden></label>
+    </div>
+    <div id="cp-body"></div>
+  </section>
+
+  <!-- IV. Replay & export -->
+  <section id="view-replay" class="view" hidden>
+    <div class="bar">
+      <label>Run record <select id="rp-run"></select></label>
+      <button id="rp-replay" class="btn primary">Replay</button>
+      <button id="rp-export" class="btn">Export research packet (.zip)</button>
+      <label class="btn ghost file-btn">Import run JSON / packet<input id="rp-import" type="file" accept=".json,.zip,application/json" hidden></label>
+    </div>
+    <div id="rp-body"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>E47-Tower v0.1 · static site · Python runs in your browser (Pyodide); nothing is uploaded</span>
+  <span id="build-info"></span>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
