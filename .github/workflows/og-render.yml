@@ -1,0 +1,66 @@
+name: Render link-share cards
+
+# Renders committed card SVGs (text already outlined to paths, so no fonts are
+# needed) into the 1200x630 PNGs that og:image points at, and commits them to
+# the same branch. The live site is served from the branch (the NOESIS page is
+# not part of the pages.yml artifact), so the PNG has to be in the tree.
+#
+# Cards are listed explicitly in CARDS. A card is rendered only when its PNG is
+# missing or its SVG was committed after the PNG, so up-to-date PNGs are never
+# rewritten.
+
+on:
+  push:
+    paths:
+      - "noesis-og.svg"
+      - ".github/workflows/og-render.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: og-render-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install rsvg-convert
+        run: sudo apt-get update -q && sudo apt-get install -y -q librsvg2-bin
+
+      - name: Render new or updated cards
+        env:
+          CARDS: noesis-og.svg
+        run: |
+          set -euo pipefail
+          for svg in $CARDS; do
+            png="${svg%.svg}.png"
+            svg_t="$(git log -1 --format=%ct -- "$svg")"
+            png_t="$(git log -1 --format=%ct -- "$png" || true)"
+            if [ ! -f "$png" ] || [ -z "$png_t" ] || [ "$svg_t" -gt "$png_t" ]; then
+              rsvg-convert -w 1200 -h 630 -b '#f6f3ec' "$svg" -o "$png"
+              echo "rendered $svg -> $png"; file "$png" || true
+            else
+              echo "skip $svg ($png is already committed and up to date)"
+            fi
+          done
+
+      - name: Commit PNGs if they changed
+        env:
+          CARDS_PNG: noesis-og.png
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A -- $CARDS_PNG
+          if git diff --staged --quiet; then
+            echo "No card PNG changed."
+          else
+            git commit -m "chore(og): render NOESIS link-share card PNG from SVG"
+            git push
+          fi
