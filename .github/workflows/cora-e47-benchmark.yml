@@ -25,4 +25,4 @@ jobs:
         if: always()
         with:
           name: cora-e47-results
-          path: cora-e47-results.json
+          path: |\n            cora-e47-results.json\n            cora-graph-aware-results.json
