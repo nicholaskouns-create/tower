@@ -1,0 +1,32 @@
+name: NOESIS authorization regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'noesis/**'
+      - '.github/workflows/noesis-auth-bridge.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authorization:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: tower
+      - uses: actions/checkout@v4
+        with:
+          repository: nicholaskouns-create/auth-kernel
+          path: auth-kernel
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Cross-repository regression
+        env:
+          PYTHONPATH: ${{ github.workspace }}/auth-kernel:${{ github.workspace }}/tower/noesis
+        run: python -m unittest discover -s tower/noesis -p 'test_*.py' -v
+      - name: NOESIS exact census
+        run: python tower/noesis/cycle.py
