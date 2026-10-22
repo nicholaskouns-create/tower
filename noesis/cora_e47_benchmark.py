@@ -21,7 +21,7 @@ def projector():
  c=sum(a@a for a in ops)
  w,v=eigh(c); selected=(abs(w-6)<1e-7)|(abs(w-30)<1e-7)
  assert selected.sum()==47
- return v[:,selected]
+ return np.asarray(v[:,selected], dtype=np.complex128)
 def main():
  raw=np.loadtxt(get("cora.content"),dtype=str)
  X=raw[:,1:-1].astype(float); _,y=np.unique(raw[:,-1],return_inverse=True)
@@ -40,9 +40,10 @@ def main():
  tr=np.concatenate([rng.choice(np.where(y==k)[0],20,replace=False) for k in range(7)])
  remain=np.setdiff1d(np.arange(2708),tr);rng.shuffle(remain);val=remain[:500];test=remain[500:1500]
  def score(H):
+  H=np.column_stack((H.real,H.imag)) if np.iscomplexobj(H) else H
   H=G@H; H=H/(np.linalg.norm(H,axis=1,keepdims=True)+1e-12)
   clf=LogisticRegression(max_iter=1500,random_state=0).fit(H[tr],y[tr])
   return {"validation_accuracy":float(accuracy_score(y[val],clf.predict(H[val]))),"test_accuracy":float(accuracy_score(y[test],clf.predict(H[test])))}
- result={"dataset":"Cora","nodes":2708,"input_features":1433,"carrier_dimension":125,"compressed_dimension":47,"embedding":"Gaussian QR seed 47","split":"stratified seed 2026, 140 train / 500 val / 1000 test, not official Planetoid","E47":{"mse":float(np.mean((Z-E@U.T)**2)),**score(E)},"PCA":{"mse":float(np.mean((Z-pca.inverse_transform(P))**2)),**score(P)}}
+ result={"dataset":"Cora","nodes":2708,"input_features":1433,"carrier_dimension":125,"compressed_dimension":47,"embedding":"Gaussian QR seed 47","split":"stratified seed 2026, 140 train / 500 val / 1000 test, not official Planetoid","E47":{"mse":float(np.mean(np.abs(Z-E@U.conj().T)**2)),**score(E)},"PCA":{"mse":float(np.mean((Z-pca.inverse_transform(P))**2)),**score(P)}}
  print(json.dumps(result,indent=2));Path("cora-e47-results.json").write_text(json.dumps(result,indent=2))
 if __name__=="__main__":main()
