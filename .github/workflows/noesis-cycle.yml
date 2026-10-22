@@ -1,0 +1,35 @@
+name: NOESIS Research Cycle
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * *'
+  push:
+    paths:
+      - 'noesis/cycle.py'
+      - '.github/workflows/noesis-cycle.yml'
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Execute exact experiment
+        run: python3 noesis/cycle.py
+      - name: Verify published receipts
+        run: git diff --exit-code -- noesis/receipt.json noesis/record.json
+      - name: Repeat and verify deterministic output
+        run: |
+          python3 noesis/cycle.py
+          git diff --exit-code -- noesis/receipt.json noesis/record.json
+      - name: Upload independently inspectable receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: noesis-e47-receipts
+          path: |
+            noesis/receipt.json
+            noesis/record.json
