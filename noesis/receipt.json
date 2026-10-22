@@ -1,0 +1,24 @@
+{
+  "schema": "noesis-v1",
+  "discovery": "E47 Casimir-selected sectors on V2 tensor cubed",
+  "experiment": "exact integer weight inversion",
+  "result": {
+    "spin_multiplicities": {
+      "0": 1,
+      "1": 3,
+      "2": 5,
+      "3": 4,
+      "4": 3,
+      "5": 2,
+      "6": 1
+    },
+    "selected_spins": [
+      2,
+      5
+    ],
+    "carrier_dimension": 125,
+    "kernel_dimension": 47
+  },
+  "result_sha256": "3698bd2cbe00a24f014f8cf0163fe61ebd7a961b87ab94d55acd6d32baa7270e",
+  "status": "PASS"
+}
