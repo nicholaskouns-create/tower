@@ -82,3 +82,8 @@ The deployed site needs its own authenticated integrations. Connections someone 
 ## Honesty
 
 The finite statements here (multiplicities, Pell relation, kept dimension, Casimir spectrum, rank 78 / nullity 47) are exact integer or rational computations. Whether the tower's limit 3/φ, or its tetrahedral reading, corresponds to physical geometry is an open question that no run here asserts or refutes.
+
+
+## E47 spectral and noiseless-subsystem certificate (2026-10-24)
+
+[Read the cross-repository evidence note](E47_SPECTRAL_ADVANTAGES_2026-10-24.md). Documents the exact 125→47 Casimir construction, the (15/17)^n spectral convergence certificate, and collective-SU(2) noiseless multiplicity encoding, separately from channel-dependent QEC and unmeasured hardware advantages.
