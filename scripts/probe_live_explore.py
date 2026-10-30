@@ -17,6 +17,7 @@ from playwright.sync_api import sync_playwright
 
 TOWER_URL = "https://nicholaskouns-create.github.io/tower/#/explore"
 HIGHLIGHT_URL = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"
+BUILD_URL = "https://nicholaskouns-create.github.io/tower/build.json"
 PAPER_COMMIT = "c14e98bd6d701723c887a5ba3a34b8caf902ab55"
 PAPER_PATH = "research/e47/papers/fib_lucas_tower/tower_paper.tex"
 PAPER_URL = (
@@ -40,6 +41,8 @@ def audit(url: str, screenshot: Path) -> dict:
         "entry_status": None,
         "highlight_url": HIGHLIGHT_URL,
         "highlight_statuses": [],
+        "build_url": BUILD_URL,
+        "build_statuses": [],
         "paper_url": PAPER_URL,
         "paper_statuses": [],
         "paper_permalink": None,
@@ -69,6 +72,8 @@ def audit(url: str, screenshot: Path) -> dict:
         def on_response(response):
             if response.url.startswith(HIGHLIGHT_URL):
                 result["highlight_statuses"].append(response.status)
+            if response.url.startswith(BUILD_URL):
+                result["build_statuses"].append(response.status)
             if response.url.startswith(PAPER_URL):
                 result["paper_statuses"].append(response.status)
         page.on("response", on_response)
