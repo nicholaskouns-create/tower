@@ -152,7 +152,12 @@ export async function openPin(key) {
     if (probeError) return msg(`Could not verify ${pin.path}: ${probeError.message}`);
     return msg(`${pin.path} was not found on ${pin.refs.join(' or ')}.`);
   }
-  if (ref !== pin.refs[0]) msg(`${pin.path.split('/').pop()} is not on ${pin.refs[0]} yet; showing it from branch ${ref}.`, 'info');
+  if (ref !== pin.refs[0]) {
+    const note = probeError
+      ? `${pin.path.split('/').pop()} loaded from ${ref}; an earlier source check was unavailable: ${probeError.message}`
+      : `${pin.path.split('/').pop()} is not on ${pin.refs[0]} yet; showing it from branch ${ref}.`;
+    msg(note, 'info');
+  }
   setHash('explore', { repo: pin.repo, ref, path: pin.path });
 }
 
