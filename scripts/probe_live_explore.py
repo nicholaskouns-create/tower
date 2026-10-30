@@ -31,8 +31,9 @@ RESTRICTED_ORIGINALS = (
 
 
 def audit(url: str, screenshot: Path) -> dict:
-    if not url.startswith("https://nicholaskouns-create.github.io/tower/"):
-        raise ValueError("Browser probe is restricted to the public Tower Pages host")
+    if not (url.startswith("https://nicholaskouns-create.github.io/tower/")
+            or url.startswith("http://127.0.0.1:8765/")):
+        raise ValueError("Browser probe is restricted to public Tower Pages or loopback fixture")
     result = {
         "audit_type": "anonymous_live_browser_tower_explore",
         "observed_utc": datetime.now(timezone.utc).isoformat(),
@@ -47,6 +48,9 @@ def audit(url: str, screenshot: Path) -> dict:
         "paper_statuses": [],
         "paper_permalink": None,
         "paper_rendered": False,
+        "final_hash": None,
+        "explorer_message": None,
+        "code_excerpt": None,
         "syntax_highlighter_ready": False,
         "deployed_build_label": None,
         "page_errors": [],
@@ -87,8 +91,10 @@ def audit(url: str, screenshot: Path) -> dict:
                 "() => typeof window.hljs?.highlight === 'function'", timeout=45000
             )
             result["syntax_highlighter_ready"] = True
+            # The pin's click handler is installed before the optional GitHub tree fetch.
+            # Waiting for tree completion here would reproduce the defect in the test.
             page.wait_for_function(
-                "() => document.querySelector('#ex-tree')?.children.length > 0",
+                """() => typeof document.querySelector('button[data-pin="paper"]')?.onclick === 'function'""",
                 timeout=60000,
             )
             page.locator('button[data-pin="paper"]').click()
@@ -115,6 +121,9 @@ def audit(url: str, screenshot: Path) -> dict:
             result["error_type"] = type(error).__name__
             result["error"] = str(error)[:1200]
         finally:
+            result["final_hash"] = page.evaluate("location.hash")
+            result["explorer_message"] = page.locator("#ex-msg").inner_text()
+            result["code_excerpt"] = page.locator("#ex-code code").inner_text()[:240]
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=True, timeout=20000)
             context.close()
