@@ -135,8 +135,10 @@ export async function openPin(key) {
   const pin = PINS[key];
   msg('');
   let ref = null;
+  let probeError = null;
   for (const r of pin.refs) {
-    try { if (await gh.rawExists(pin.repo, r, pin.path)) { ref = r; break; } } catch (e) { msg(e.message); }
+    try { if (await gh.rawExists(pin.repo, r, pin.path)) { ref = r; break; } }
+    catch (e) { probeError ??= e; msg(e.message); }
   }
   if (!ref) {
     if (pin.local) {          // not pushed yet (local preview): show the copy this site serves
@@ -146,9 +148,16 @@ export async function openPin(key) {
       renderCode(text, 'python');
       return;
     }
+    // A failed network probe cannot establish that a manuscript is absent.
+    if (probeError) return msg(`Could not verify ${pin.path}: ${probeError.message}`);
     return msg(`${pin.path} was not found on ${pin.refs.join(' or ')}.`);
   }
-  if (ref !== pin.refs[0]) msg(`${pin.path.split('/').pop()} is not on ${pin.refs[0]} yet; showing it from branch ${ref}.`, 'info');
+  if (ref !== pin.refs[0]) {
+    const note = probeError
+      ? `${pin.path.split('/').pop()} loaded from ${ref}; an earlier source check was unavailable: ${probeError.message}`
+      : `${pin.path.split('/').pop()} is not on ${pin.refs[0]} yet; showing it from branch ${ref}.`;
+    msg(note, 'info');
+  }
   setHash('explore', { repo: pin.repo, ref, path: pin.path });
 }
 
