@@ -1,0 +1,71 @@
+name: Tower live browser navigation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'js/explorer.js'
+      - 'js/github.js'
+      - 'scripts/probe_live_explore.py'
+      - '.github/workflows/tower-live-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-explore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser automation library
+        run: python -m pip install playwright==1.56.0
+      - name: Verify browser availability and probe syntax
+        run: |
+          google-chrome --version
+          python -m py_compile scripts/probe_live_explore.py
+      - name: Serve the feature branch independently
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 >/tmp/tower-preview.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/tower-preview.log
+          exit 1
+      - name: Browser-check the proposed source and pinned paper
+        run: |
+          python scripts/probe_live_explore.py \
+            --url 'http://127.0.0.1:8765/#/explore' \
+            --output tower-explore-local-evidence.json \
+            --screenshot tower-explore-local.png
+      - name: Observe current public deployment without blocking an undeployed PR
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          python scripts/probe_live_explore.py \
+            --output tower-explore-live-evidence.json \
+            --screenshot tower-explore-live.png
+      - name: Verify public deployment after integration
+        if: github.event_name != 'pull_request'
+        run: |
+          python scripts/probe_live_explore.py \
+            --output tower-explore-live-evidence.json \
+            --screenshot tower-explore-live.png
+      - name: Preserve browser evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tower-live-explore-browser-evidence
+          path: |
+            tower-explore-local-evidence.json
+            tower-explore-local.png
+            tower-explore-live-evidence.json
+            tower-explore-live.png
+          if-no-files-found: warn
