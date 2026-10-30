@@ -5,7 +5,7 @@ import * as X from './experiments.js';
 
 export const PINS = {
   validator: { repo: 'nicholaskouns-create/E47-Kartekeya', path: 'research/e47/validation/e47_fib_lucas_tower_validate.py', refs: ['main'] },
-  paper: { repo: 'nicholaskouns-create/E47-Kartekeya', path: 'research/e47/papers/fib_lucas_tower/tower_paper.tex', refs: ['main', 'research/fib-lucas-tower-paper'] },
+  paper: { repo: 'nicholaskouns-create/E47-Kartekeya', path: 'research/e47/papers/fib_lucas_tower/tower_paper.tex', refs: ['c14e98bd6d701723c887a5ba3a34b8caf902ab55'] },
   census: { repo: X.SELF_REPO, path: 'experiments/tower_census.py', refs: ['main', 'release/v0.1-workbench'], local: true },
 };
 const LANG = { py: 'python', tex: 'latex', js: 'javascript', mjs: 'javascript', json: 'json', md: 'markdown', yml: 'yaml', yaml: 'yaml', sh: 'bash', html: 'xml', xml: 'xml', svg: 'xml', css: 'css', toml: 'ini', ini: 'ini', ts: 'typescript', sql: 'sql', r: 'r', jl: 'julia', c: 'c', cpp: 'cpp', rs: 'rust', go: 'go' };
