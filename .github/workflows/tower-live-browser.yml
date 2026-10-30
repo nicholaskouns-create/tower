@@ -30,17 +30,42 @@ jobs:
         run: |
           google-chrome --version
           python -m py_compile scripts/probe_live_explore.py
-      - name: Execute real public Tower browser and pinned paper route
+      - name: Serve the feature branch independently
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 >/tmp/tower-preview.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/tower-preview.log
+          exit 1
+      - name: Browser-check the proposed source and pinned paper
         run: |
           python scripts/probe_live_explore.py \
-            --output tower-explore-browser-evidence.json \
-            --screenshot tower-explore-browser.png
+            --url 'http://127.0.0.1:8765/#/explore' \
+            --output tower-explore-local-evidence.json \
+            --screenshot tower-explore-local.png
+      - name: Observe current public deployment without blocking an undeployed PR
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          python scripts/probe_live_explore.py \
+            --output tower-explore-live-evidence.json \
+            --screenshot tower-explore-live.png
+      - name: Verify public deployment after integration
+        if: github.event_name != 'pull_request'
+        run: |
+          python scripts/probe_live_explore.py \
+            --output tower-explore-live-evidence.json \
+            --screenshot tower-explore-live.png
       - name: Preserve browser evidence, including failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tower-live-explore-browser-evidence
           path: |
-            tower-explore-browser-evidence.json
-            tower-explore-browser.png
+            tower-explore-local-evidence.json
+            tower-explore-local.png
+            tower-explore-live-evidence.json
+            tower-explore-live.png
           if-no-files-found: warn
