@@ -33,9 +33,9 @@ class TowerPaperPin(unittest.TestCase):
         with urllib.request.urlopen(url, timeout=25) as response:
             self.assertEqual(response.status, 200)
             body = response.read()
-        git_blob = b"blob " + str(len(body)).encode("ascii") + b"\\0" + body
+        git_blob = b"blob " + str(len(body)).encode("ascii") + b"\0" + body
         self.assertEqual(hashlib.sha1(git_blob).hexdigest(), BLOB_SHA1)
-        self.assertIn(b"\\\\documentclass", body)
+        self.assertIn(b"\\documentclass", body)
 
 
 if __name__ == "__main__":
