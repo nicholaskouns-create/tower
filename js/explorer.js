@@ -170,11 +170,24 @@ export async function show(q) {
     document.querySelectorAll('[data-pin]').forEach((b) => (b.onclick = () => openPin(b.dataset.pin)));
   }
   const repo = q.get('repo') || st.repo, ref = q.get('ref') || (repo === st.repo ? st.ref : 'main');
+  const path = q.get('path');
+  const pinnedPath = !!path && /^[0-9a-f]{40}$/.test(ref);
   if (repo !== st.repo || ref !== st.ref || !st.sha) {
     const keep = $('#ex-msg').classList.contains('info') ? $('#ex-msg').textContent : null;
+    if (pinnedPath) {
+      // A pinned manuscript must not wait for the unrelated GitHub branches/tree API.
+      // Render immutable raw content first, then populate the optional tree.
+      st.repo = repo; st.ref = ref; st.sha = ref; st.entries = []; st.path = null;
+      $('#ex-repo').value = repo;
+      $('#ex-tree').replaceChildren(h('div', { class: 'tiny' }, 'loading pinned tree…'));
+      await openFile(path, { repo, ref });
+      if (keep) msg(keep, 'info');
+      await loadRefs();
+      await loadTree();
+      return;
+    }
     await selectRepo(repo, ref);
     if (keep) msg(keep, 'info');
   }
-  const path = q.get('path');
   if (path) await openFile(path, { repo, ref });
 }
