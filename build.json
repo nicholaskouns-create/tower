@@ -1,0 +1,5 @@
+---
+layout: null
+permalink: /build.json
+---
+{"commit":"{{ site.github.build_revision }}","ref":"main","built_at":"{{ site.time | date: '%Y-%m-%dT%H:%M:%SZ' }}"}
