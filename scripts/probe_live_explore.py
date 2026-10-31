@@ -13,6 +13,7 @@ import os
 import re
 from pathlib import Path
 import sys
+from urllib.parse import urlsplit
 
 from playwright.sync_api import sync_playwright
 
@@ -29,6 +30,32 @@ RESTRICTED_ORIGINALS = (
     "https://docs.google.com/document/d/1wCmn5J4Tjo0qVV5AOoHUxD1tXComhPf7lU1ntzKtaMs/edit",
     "https://drive.google.com/file/d/1-bCyEuWcN1rtRb1IJF02O8tTe7RbmaEC/view",
 )
+
+
+
+def canonical_restricted_original(url: str) -> str | None:
+    """Match restricted originals even if a browser adds a query or trailing slash.
+
+    Return only the source-catalogued URL, never an unreviewed query value.
+    """
+    observed = urlsplit(url)
+    for original in RESTRICTED_ORIGINALS:
+        expected = urlsplit(original)
+        if (observed.scheme == "https"
+                and observed.hostname == expected.hostname
+                and observed.path.rstrip("/") == expected.path.rstrip("/")):
+            return original
+    return None
+
+
+def guard_restricted_original_route(route, blocked: list[str]) -> None:
+    """Abort restricted-original requests before network, preserving a safe receipt."""
+    original = canonical_restricted_original(route.request.url)
+    if original is not None:
+        blocked.append(original)
+        route.abort("blockedbyclient")
+    else:
+        route.continue_()
 
 
 def audit(url: str, screenshot: Path) -> dict:
@@ -58,6 +85,7 @@ def audit(url: str, screenshot: Path) -> dict:
         "page_errors": [],
         "request_failures": [],
         "restricted_originals_not_requested": list(RESTRICTED_ORIGINALS),
+        "restricted_originals_blocked": [],
         "historical_census": {
             "links_followed": 177, "failures": 4,
             "scope": "historical baseline, not re-crawled by this browser probe",
@@ -70,10 +98,14 @@ def audit(url: str, screenshot: Path) -> dict:
             channel="chrome", headless=True, args=["--no-sandbox"]
         )
         context = browser.new_context()
+        # Guard every browser request before it can reach a restricted Drive URL.
+        context.route("**/*", lambda route: guard_restricted_original_route(
+            route, result["restricted_originals_blocked"]))
         page = context.new_page()
         page.on("pageerror", lambda error: result["page_errors"].append(str(error)))
         page.on("requestfailed", lambda request: result["request_failures"].append(
-            {"url": request.url, "failure": request.failure}
+            {"url": urlsplit(request.url)._replace(query="", fragment="").geturl(),
+             "failure": request.failure}
         ))
         def on_response(response):
             if response.url.startswith(HIGHLIGHT_URL):
@@ -124,8 +156,8 @@ def audit(url: str, screenshot: Path) -> dict:
                 raise AssertionError("Browser did not observe HTTP 200 for the replacement highlighter")
             if 200 not in result["paper_statuses"]:
                 raise AssertionError("Browser did not observe HTTP 200 for the immutable paper")
-            if any(x["url"] in RESTRICTED_ORIGINALS for x in result["request_failures"]):
-                raise AssertionError("A restricted original was unexpectedly requested")
+            if result["restricted_originals_blocked"]:
+                raise AssertionError("A restricted original was attempted and blocked before network")
             if url.startswith("https://"):
                 readback = result["build_manifest_readback"] or {}
                 if 200 not in result["build_statuses"] or readback.get("status") != 200:
