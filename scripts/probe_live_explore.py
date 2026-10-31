@@ -115,6 +115,9 @@ def audit(url: str, screenshot: Path) -> dict:
                 raise AssertionError("Browser did not observe HTTP 200 for the immutable paper")
             if any(x["url"] in RESTRICTED_ORIGINALS for x in result["request_failures"]):
                 raise AssertionError("A restricted original was unexpectedly requested")
+            if url.startswith("https://") and 404 in result["build_statuses"]:
+                if result["deployed_build_label"] != "deployment commit unverified (build.json missing or invalid)":
+                    raise AssertionError("Public missing build.json is incorrectly labelled a local preview")
             result["outcome"] = "browser_pass"
         except Exception as error:
             result["outcome"] = "browser_failure"
