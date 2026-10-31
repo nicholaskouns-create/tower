@@ -7,6 +7,8 @@ on:
     paths:
       - 'index.html'
       - 'js/explorer.js'
+      - 'js/app.js'
+      - 'js/deployment.js'
       - 'js/github.js'
       - 'scripts/probe_live_explore.py'
       - '.github/workflows/tower-live-browser.yml'

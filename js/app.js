@@ -1,6 +1,7 @@
 // E47-Tower v0.1 — hash router tying the four views together.
 import { $, $$, parseHash } from './util.js';
 import * as X from './experiments.js';
+import { deploymentLabel } from './deployment.js';
 import * as explorer from './explorer.js';
 import * as runner from './runner.js';
 import * as compare from './compare.js';
@@ -20,8 +21,7 @@ async function route() {
 
 (async function main() {
   await X.loadRegistry();
-  const b = X.buildInfo();
-  $('#build-info').textContent = b && b.commit ? `deployed from tower@${b.commit.slice(0, 7)}` : 'local preview (no deploy commit)';
+  $('#build-info').textContent = deploymentLabel(X.buildInfo(), location.hostname);
   window.addEventListener('hashchange', route);
   if (!location.hash) history.replaceState(null, '', '#/explore');
   route();
