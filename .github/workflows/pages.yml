@@ -26,7 +26,7 @@ jobs:
 
       - name: Stamp the deploy commit (run records pin local experiments to it)
         run: |
-          printf '{"commit":"%s","ref":"%s","built_at":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build.json
+          printf '{"commit":"%s","ref":"%s","built_at":"%s","publisher":"actions-deploy-pages"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build.json
           mkdir -p _site
           cp -r index.html css js experiments build.json README.md og.jpg fibonacci-og.jpg _site/
           touch _site/.nojekyll
