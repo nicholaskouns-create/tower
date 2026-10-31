@@ -42,7 +42,10 @@ class RestrictedOriginalBrowserGuard(unittest.TestCase):
     def test_restricted_originals_and_query_variants_are_blocked(self):
         for original in ORIGINALS:
             for url in (original, original + "?access_token=PRIVATE_VALUE",
-                        original + "/?usp=sharing"):
+                        original + "/?usp=sharing",
+                        original.replace("https://", "http://", 1),
+                        original.replace("https://", "http://", 1)
+                        + "?access_token=PRIVATE_VALUE"):
                 with self.subTest(url=url.split("?")[0]):
                     route = FakeRoute(url)
                     blocked = []
@@ -56,6 +59,7 @@ class RestrictedOriginalBrowserGuard(unittest.TestCase):
             "https://nicholaskouns-create.github.io/tower/#/explore",
             "https://raw.githubusercontent.com/nicholaskouns-create/E47-Kartekeya/main/README.md",
             "https://docs.google.com/document/d/unrelated/edit",
+            "http://docs.google.com/document/d/unrelated/edit",
             "https://drive.google.com/file/d/unrelated/view",
         ):
             with self.subTest(url=url):
