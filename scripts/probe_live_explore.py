@@ -10,6 +10,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import re
 from pathlib import Path
 import sys
 
@@ -44,6 +45,7 @@ def audit(url: str, screenshot: Path) -> dict:
         "highlight_statuses": [],
         "build_url": BUILD_URL,
         "build_statuses": [],
+        "build_manifest_readback": None,
         "paper_url": PAPER_URL,
         "paper_statuses": [],
         "paper_permalink": None,
@@ -107,6 +109,15 @@ def audit(url: str, screenshot: Path) -> dict:
             result["paper_rendered"] = True
             result["paper_permalink"] = page.locator("#ex-gh").get_attribute("href")
             result["deployed_build_label"] = page.locator("#build-info").inner_text()
+            result["build_manifest_readback"] = page.evaluate("""async () => {
+              try {
+                const response = await fetch('build.json', {cache: 'no-store'});
+                return {status: response.status,
+                  body: response.ok ? await response.json() : null};
+              } catch (error) {
+                return {error: String(error)};
+              }
+            }""")
             if PAPER_COMMIT not in (result["paper_permalink"] or ""):
                 raise AssertionError("Rendered manuscript link is not pinned to the verified commit")
             if 200 not in result["highlight_statuses"]:
@@ -115,9 +126,28 @@ def audit(url: str, screenshot: Path) -> dict:
                 raise AssertionError("Browser did not observe HTTP 200 for the immutable paper")
             if any(x["url"] in RESTRICTED_ORIGINALS for x in result["request_failures"]):
                 raise AssertionError("A restricted original was unexpectedly requested")
-            if url.startswith("https://") and 404 in result["build_statuses"]:
-                if result["deployed_build_label"] != "deployment commit unverified (build.json missing or invalid)":
-                    raise AssertionError("Public missing build.json is incorrectly labelled a local preview")
+            if url.startswith("https://"):
+                readback = result["build_manifest_readback"] or {}
+                if 200 not in result["build_statuses"] or readback.get("status") != 200:
+                    raise AssertionError(
+                        f"Public build.json missing after fallback repair: "
+                        f"initial={result['build_statuses']}, readback={readback}"
+                    )
+                manifest = readback.get("body") or {}
+                publisher = manifest.get("publisher")
+                commit = manifest.get("commit")
+                if publisher == "branch-pages-unverified":
+                    if commit is not None or result["deployed_build_label"] != (
+                        "deployment commit unverified (build.json missing or invalid)"
+                    ):
+                        raise AssertionError("Branch publisher claimed an unverified commit")
+                elif publisher == "actions-deploy-pages":
+                    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
+                        raise AssertionError("Actions manifest lacks a valid full commit")
+                    if result["deployed_build_label"] != f"deployed from tower@{commit[:7]}":
+                        raise AssertionError("Actions manifest and visible commit label differ")
+                else:
+                    raise AssertionError(f"Unknown public Pages publisher: {publisher!r}")
             result["outcome"] = "browser_pass"
         except Exception as error:
             result["outcome"] = "browser_failure"
