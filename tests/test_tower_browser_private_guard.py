@@ -7,7 +7,7 @@ import ast
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = (ROOT / "scripts" / "probe_live_explore.py").read_text(encoding="utf-8")
@@ -22,7 +22,7 @@ ORIGINALS = next(
     and any(isinstance(target, ast.Name) and target.id == "RESTRICTED_ORIGINALS"
             for target in node.targets)
 )
-ENV = {"urlsplit": urlsplit, "RESTRICTED_ORIGINALS": ORIGINALS}
+ENV = {"urlsplit": urlsplit, "unquote": unquote, "RESTRICTED_ORIGINALS": ORIGINALS}
 exec(compile(ast.Module(body=FUNCS, type_ignores=[]), "<browser-guard>", "exec"), ENV)
 
 
@@ -53,6 +53,28 @@ class RestrictedOriginalBrowserGuard(unittest.TestCase):
                     self.assertEqual(route.actions, [("abort", "blockedbyclient")])
                     self.assertEqual(blocked, [original])
                     self.assertNotIn("PRIVATE_VALUE", str(blocked))
+
+    def test_percent_encoded_restricted_paths_are_blocked(self):
+        # An encoded character in /edit or /view retains the same original
+        # document identity but previously escaped the literal path comparison.
+        for original in ORIGINALS:
+            if original.endswith("/edit"):
+                encoded = original[:-4] + "%65dit"
+            else:
+                encoded = original[:-4] + "vi%65w"
+            with self.subTest(original=original):
+                route = FakeRoute(encoded + "?access_token=PRIVATE_VALUE")
+                blocked = []
+                ENV["guard_restricted_original_route"](route, blocked)
+                self.assertEqual(route.actions, [("abort", "blockedbyclient")])
+                self.assertEqual(blocked, [original])
+                self.assertNotIn("PRIVATE_VALUE", str(blocked))
+
+        unrelated = FakeRoute("https://docs.google.com/document/d/unrelated/%65dit")
+        blocked = []
+        ENV["guard_restricted_original_route"](unrelated, blocked)
+        self.assertEqual(unrelated.actions, [("continue", None)])
+        self.assertEqual(blocked, [])
 
     def test_public_and_unrelated_docs_continue(self):
         for url in (

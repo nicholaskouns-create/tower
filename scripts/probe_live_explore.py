@@ -13,7 +13,7 @@ import os
 import re
 from pathlib import Path
 import sys
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 from playwright.sync_api import sync_playwright
 
@@ -34,7 +34,7 @@ RESTRICTED_ORIGINALS = (
 
 
 def canonical_restricted_original(url: str) -> str | None:
-    """Match restricted originals even if a browser adds a query or trailing slash.
+    """Match restricted originals across query, slash and percent-encoded path variants.
 
     Return only the source-catalogued URL, never an unreviewed query value.
     """
@@ -43,7 +43,7 @@ def canonical_restricted_original(url: str) -> str | None:
         expected = urlsplit(original)
         if (observed.scheme in {"http", "https"}
                 and observed.hostname == expected.hostname
-                and observed.path.rstrip("/") == expected.path.rstrip("/")):
+                and unquote(observed.path).rstrip("/") == expected.path.rstrip("/")):
             return original
     return None
 
