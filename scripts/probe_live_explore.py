@@ -41,7 +41,7 @@ def canonical_restricted_original(url: str) -> str | None:
     observed = urlsplit(url)
     for original in RESTRICTED_ORIGINALS:
         expected = urlsplit(original)
-        if (observed.scheme == "https"
+        if (observed.scheme in {"http", "https"}
                 and observed.hostname == expected.hostname
                 and observed.path.rstrip("/") == expected.path.rstrip("/")):
             return original
