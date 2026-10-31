@@ -1,0 +1,48 @@
+name: Tower Pages manifest parity
+
+# Verify the branch/Jekyll publisher separately from the existing Actions publisher.
+# No deploy or permission changes. The Actions publisher stamps its own build.json.
+on:
+  pull_request:
+    paths:
+      - 'build.json'
+      - '.github/workflows/tower-pages-manifest-parity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'build.json'
+      - '.github/workflows/tower-pages-manifest-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  jekyll-manifest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with the same GitHub Pages Jekyll action as the competing publisher
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: .
+          destination: ./_site
+          build_revision: ${{ github.sha }}
+      - name: Assert generated manifest is JSON with this build revision
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, re
+          path = pathlib.Path('_site/build.json')
+          assert path.is_file(), 'Jekyll publisher omitted build.json'
+          raw = path.read_text(encoding='utf-8')
+          obj = json.loads(raw)
+          sha = obj.get('commit', '')
+          assert re.fullmatch(r'[0-9a-f]{40}', sha), f'invalid manifest commit: {sha!r}'
+          assert sha == os.environ['EXPECTED_COMMIT'], f'manifest commit {sha} differs from built revision'
+          assert obj.get('ref') == 'main', 'unexpected source branch label'
+          assert re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z', obj.get('built_at','')), 'invalid UTC timestamp'
+          print(f'JEKYLL_MANIFEST_PASS {path} {sha}')
+          PY
