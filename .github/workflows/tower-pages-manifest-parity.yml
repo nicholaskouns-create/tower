@@ -43,6 +43,6 @@ jobs:
           assert re.fullmatch(r'[0-9a-f]{40}', sha), f'invalid manifest commit: {sha!r}'
           assert sha == os.environ['EXPECTED_COMMIT'], f'manifest commit {sha} differs from built revision'
           assert obj.get('ref') == 'main', 'unexpected source branch label'
-          assert re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z', obj.get('built_at','')), 'invalid UTC timestamp'
+          assert re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z', obj.get('built_at','')), 'invalid UTC timestamp'
           print(f'JEKYLL_MANIFEST_PASS {path} {sha}')
           PY
