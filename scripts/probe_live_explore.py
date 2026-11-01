@@ -16,6 +16,7 @@ import sys
 from urllib.parse import unquote, urlsplit
 
 from playwright.sync_api import sync_playwright
+from browser_readback import capture_readback
 
 TOWER_URL = "https://nicholaskouns-create.github.io/tower/#/explore"
 HIGHLIGHT_URL = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"
@@ -186,11 +187,10 @@ def audit(url: str, screenshot: Path) -> dict:
             result["error_type"] = type(error).__name__
             result["error"] = str(error)[:1200]
         finally:
-            result["final_hash"] = page.evaluate("location.hash")
-            result["explorer_message"] = page.locator("#ex-msg").inner_text()
-            result["code_excerpt"] = page.locator("#ex-code code").inner_text()[:240]
-            screenshot.parent.mkdir(parents=True, exist_ok=True)
-            page.screenshot(path=str(screenshot), full_page=True, timeout=20000)
+            # A failed navigation may not have rendered these nodes. Preserve
+            # the original browser_failure rather than masking it with a
+            # secondary TimeoutError during evidence collection.
+            capture_readback(page, screenshot, result)
             context.close()
             browser.close()
     return result
