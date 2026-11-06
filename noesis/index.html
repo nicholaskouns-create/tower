@@ -19,4 +19,5 @@
 const base='https://raw.githubusercontent.com/nicholaskouns-create/tower/main/noesis/';
 fetch(base+'receipt.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{document.getElementById('status').textContent='Published receipt: '+d.status;document.getElementById('receipt').textContent=JSON.stringify(d,null,2)}).catch(e=>document.getElementById('status').textContent='Receipt unavailable: '+e.message);
 document.getElementById('run').onclick=()=>{let w={0:1};for(let i=0;i<3;i++){let q={};for(let [a,n] of Object.entries(w))for(let b=-2;b<=2;b++){let k=Number(a)+b;q[k]=(q[k]||0)+n}w=q}let m={};for(let j=0;j<=6;j++)m[j]=(w[j]||0)-(w[j+1]||0);let selected=[];for(let j=0;j<=6;j++){let c=j*(j+1);if((c-6)*(c-30)===0)selected.push(j)}let result={spin_multiplicities:m,selected_spins:selected,carrier_dimension:Object.entries(m).reduce((s,[j,n])=>s+(2*Number(j)+1)*n,0),kernel_dimension:selected.reduce((s,j)=>s+(2*j+1)*m[j],0)};document.getElementById('result').textContent=JSON.stringify(result,null,2)};
-</script></html>
+</script><p><a href="../experiments/e47-spectral-kernel/E47-spectral-kernel.svg">The E₄₇ spectral kernel · publication plate</a></p>
+</html>
