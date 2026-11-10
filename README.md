@@ -1,5 +1,8 @@
 # E47-Tower
 
+> **Current license:** [All Rights Reserved](LICENSE) for owned original material. No new reuse permission. Earlier licenses and third-party/public-domain rights remain unaffected.
+
+
 **A working research environment for the Fibonacci–Lucas tower of E47.** Browse the source, run it, compare runs, replay them, and take the receipts with you, all on one static page. Python runs in your browser through [Pyodide](https://pyodide.org). Nothing is uploaded and you don't need an account.
 
 > Three spins of size *j* = (*F_n* − 1)/2. One Casimir selector at mean ± one standard deviation. Out fall the multiplicities *F_n* and *F_{n−2}*, the Pell relation *J*(*J*+1) = 5*j*(*j*+1), the kept dimension *D* = *F_n*² + *F_{n−2}L_n* (47 at *n* = 5), and the limit *D*/(2*j*+1)² → 3/φ.
