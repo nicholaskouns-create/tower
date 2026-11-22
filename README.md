@@ -94,3 +94,12 @@ The finite statements here (multiplicities, Pell relation, kept dimension, Casim
 [Read the cross-repository evidence note](E47_SPECTRAL_ADVANTAGES_2026-10-24.md). Documents the exact 125→47 Casimir construction, the (15/17)^n spectral convergence certificate, and collective-SU(2) noiseless multiplicity encoding, separately from channel-dependent QEC and unmeasured hardware advantages.
 
 [The E₄₇ spectral kernel · formalism and verification](experiments/e47-spectral-kernel/README.md)
+
+
+<!-- FUN-WITH-EINSTEIN-2026 -->
+### 🪐 Fun With Einstein · Interactive spectral & quantum lab
+
+[Launch Fun With Einstein](https://nicholaskouns-create.github.io/fun-with-einstein/) · [Source & Python/Lean/Coq proof modules](https://github.com/nicholaskouns-create/E47-Kartekeya/tree/main/docs/fun-with-einstein) · [CI compiler status](https://github.com/nicholaskouns-create/E47-Kartekeya/actions/workflows/fun-with-einstein.yml).
+
+Fivefold C₅ eigenvalue ratio = φ⁻²; 125D Casimir E₄₇ projector; 250D quantum-ancilla probability α=47/(125φ²); stationary Einstein-equation recovery. Spectral simulation and gravitational statements have different evidence classes.
+<!-- /FUN-WITH-EINSTEIN-2026 -->
